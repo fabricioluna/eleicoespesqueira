@@ -1,76 +1,212 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Tooltip } from 'react-leaflet'
 
-export default function ComparativoMataMata({ dados, cargo }) {
+export default function ComparativoMataMata({ dados, cargo, apelidos }) {
   const [compAno, setCompAno] = useState('2024');
-  const [cands, setCands] = useState([null, null, null]);
+  const [cand1, setCand1] = useState(null);
+  const [cand2, setCand2] = useState(null);
+  const [cand3, setCand3] = useState(null);
   const [res, setRes] = useState(null);
 
-  const lista = Array.from(new Set(dados[compAno].filter(l => l.DS_CARGO?.toUpperCase() === cargo).map(l => {
-    const nv = l.NM_VOTAVEL?.toUpperCase();
-    if (nv?.includes('BRANCO') || nv?.includes('NULO')) return "BRANCOS E NULOS - BN";
-    return `${l.NM_VOTAVEL} - ${l.NR_VOTAVEL}`;
-  }))).sort();
+  // Lista dinâmica de candidatos baseada no ano selecionado
+  const listaCands = useMemo(() => {
+    const cSet = new Set();
+    if (!dados[compAno]) return [];
+    dados[compAno].forEach(l => {
+      if (l.DS_CARGO?.toUpperCase() === cargo) {
+        const nv = l.NM_VOTAVEL?.toUpperCase();
+        if (nv?.includes('BRANCO') || nv?.includes('NULO')) cSet.add(`BN|BRANCOS E NULOS`);
+        else if (l.NR_VOTAVEL) {
+          const ap = apelidos[compAno]?.[l.NR_VOTAVEL]?.apelido || l.NM_VOTAVEL;
+          cSet.add(`${l.NR_VOTAVEL}|${ap}`);
+        }
+      }
+    });
+    return Array.from(cSet).sort((a, b) => a.split('|')[1].localeCompare(b.split('|')[1]));
+  }, [dados, compAno, cargo, apelidos]);
 
-  const comparar = () => {
-    const d = dados[compAno]; const esc = {}; let vts = [0,0,0]; const filtro = new Set();
+  const gerarCoordenada = (nome) => {
+    let hash = 0;
+    for (let i = 0; i < nome.length; i++) hash = nome.charCodeAt(i) + ((hash << 5) - hash);
+    return [-8.3578 + ((hash % 100) / 3000), -36.6961 + (((hash >> 2) % 100) / 3000)];
+  };
+
+  const processarDuelo = () => {
+    if (!cand1 && !cand2) return;
+
+    const d = dados[compAno];
+    const escolas = {};
+    let tot1 = 0, tot2 = 0, tot3 = 0;
+    const filtro = new Set();
+
     d.forEach(l => {
       const id = `${l.NR_ZONA}-${l.NR_SECAO}-${l.NR_VOTAVEL}`;
       if (l.DS_CARGO?.toUpperCase() === cargo && !filtro.has(id)) {
-        const e = l.NM_LOCAL_VOTACAO?.trim(); if (!e) return;
-        if (!esc[e]) esc[e] = { v: [0,0,0], coord: [-8.3578, -36.6961] }; // Simplificado
-        const v = parseInt(l.QT_VOTOS) || 0; const nv = l.NM_VOTAVEL?.toUpperCase();
-        cands.forEach((o, i) => {
-          if (o && ((o.num==='BN' && (nv?.includes('BRANCO')||nv?.includes('NULO'))) || l.NR_VOTAVEL?.trim()===o.num)) {
-            esc[e].v[i] += v; vts[i] += v; filtro.add(id);
-          }
-        });
+        const v = parseInt(l.QT_VOTOS) || 0;
+        const numVotavel = l.NR_VOTAVEL?.trim();
+        const nomeVotavel = l.NM_VOTAVEL?.toUpperCase();
+
+        let esc = l.NM_LOCAL_VOTACAO?.trim() || "OUTRAS SEÇÕES";
+        const escFinal = (esc === "#NULO" || esc === "") ? "OUTRAS SEÇÕES / VOTOS GERAIS" : esc;
+
+        if (!escolas[escFinal]) {
+          escolas[escFinal] = { v1: 0, v2: 0, v3: 0, coord: gerarCoordenada(escFinal) };
+        }
+
+        const checkMatch = (cand) => {
+          if (!cand) return false;
+          if (cand.num === 'BN') return nomeVotavel?.includes('BRANCO') || nomeVotavel?.includes('NULO');
+          return numVotavel === cand.num;
+        };
+
+        if (checkMatch(cand1)) { escolas[escFinal].v1 += v; tot1 += v; filtro.add(id); }
+        else if (checkMatch(cand2)) { escolas[escFinal].v2 += v; tot2 += v; filtro.add(id); }
+        else if (checkMatch(cand3)) { escolas[escFinal].v3 += v; tot3 += v; filtro.add(id); }
       }
     });
-    setRes({ vts, det: Object.entries(esc) });
+
+    setRes({ tot1, tot2, tot3, detalhe: Object.entries(escolas) });
+  };
+
+  const criarIconeVencedor = (v1, v2, v3) => {
+    let cor = '#94a3b8'; // Cinza se empate ou zero
+    if (v1 > v2 && v1 > v3) cor = '#10b981';      // Verde
+    else if (v2 > v1 && v2 > v3) cor = '#ef4444'; // Vermelho
+    else if (v3 > v1 && v3 > v2) cor = '#3b82f6'; // Azul
+
+    return L.divIcon({
+      html: `<div style="background-color: ${cor}; border: 2px solid white; border-radius: 50%; width: 24px; height: 24px; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
+      className: '', iconSize: [24, 24], iconAnchor: [12, 12]
+    });
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="bg-white p-8 rounded-[40px] shadow-sm border grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-        <div><label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Ano</label>
-          <select className="w-full p-4 bg-slate-50 border rounded-2xl font-bold" onChange={e => {setCompAno(e.target.value); setRes(null);}}><option value="2024">2024</option><option value="2020">2020</option></select>
-        </div>
-        {[0,1,2].map(i => (
-          <div key={i}>
-            <label className={`text-[10px] font-black uppercase mb-2 block ${i===0?'text-emerald-500':i===1?'text-red-500':'text-blue-500'}`}>Oponente {i+1}</label>
-            <select className="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-[10px]" onChange={e => {
-                const n = [...cands]; n[i] = e.target.value ? {nome: e.target.value.split(' - ')[0], num: e.target.value.split(' - ').pop()} : null;
-                setCands(n);
-            }}>
-              <option value="">Nenhum</option>
-              {lista.map((item, idx) => <option key={idx} value={item}>{item}</option>)}
+    <div className="space-y-8 animate-fade-in pb-10">
+      {/* PAINEL DE SELEÇÃO */}
+      <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <div>
+            <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block">Ano Base</label>
+            <select 
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold outline-none focus:border-slate-300"
+              value={compAno}
+              onChange={(e) => { setCompAno(e.target.value); setRes(null); setCand1(null); setCand2(null); setCand3(null); }}
+            >
+              <option value="2024">Eleição 2024</option>
+              <option value="2020">Eleição 2020</option>
             </select>
           </div>
-        ))}
-        <button onClick={comparar} className="bg-blue-700 text-white font-black py-4 rounded-2xl uppercase text-xs">Duelo</button>
+
+          {[1, 2, 3].map(idx => (
+            <div key={idx}>
+              <label className={`text-[10px] font-black uppercase mb-2 block ${idx===1?'text-emerald-500':idx===2?'text-red-500':'text-blue-500'}`}>
+                Candidato {idx}
+              </label>
+              <select 
+                className={`w-full p-4 bg-slate-50 border-2 rounded-2xl font-bold text-[10px] outline-none ${idx===1?'border-emerald-50':idx===2?'border-red-50':'border-blue-50'}`}
+                onChange={(e) => {
+                  const val = e.target.value ? { num: e.target.value.split('|')[0], nome: e.target.value.split('|')[1] } : null;
+                  if (idx === 1) setCand1(val); if (idx === 2) setCand2(val); if (idx === 3) setCand3(val);
+                }}
+              >
+                <option value="">Selecione...</option>
+                {listaCands.map((c, i) => <option key={i} value={c}>{c.split('|')[1]}</option>)}
+              </select>
+            </div>
+          ))}
+
+          <button 
+            onClick={processarDuelo}
+            disabled={!cand1 && !cand2}
+            className="bg-slate-900 text-white font-black py-4 rounded-2xl shadow-xl uppercase text-xs hover:bg-black transition-all disabled:opacity-30"
+          >
+            Comparar
+          </button>
+        </div>
       </div>
+
       {res && (
-        <div className="space-y-6">
-           <div className="grid grid-cols-3 gap-4">
-              {cands.map((o, i) => o && (
-                <div key={i} className={`p-6 rounded-3xl text-white ${i===0?'bg-emerald-500':i===1?'bg-red-500':'bg-blue-500'}`}>
-                  <p className="text-[10px] uppercase font-bold opacity-70">{o.nome}</p>
-                  <p className="text-3xl font-black">{res.vts[i]}</p>
-                </div>
-              ))}
-           </div>
-           <div className="bg-white p-6 rounded-3xl border h-[500px] overflow-y-auto">
-              {res.det.map(([n, d], i) => (
-                <div key={i} className="flex justify-between p-4 border-b last:border-0 items-center">
-                  <span className="text-xs font-bold text-slate-500">{n}</span>
-                  <div className="flex gap-4">
-                    {cands.map((o, idx) => o && <span key={idx} className="text-xs font-black">{d.v[idx]}v</span>)}
-                  </div>
-                </div>
-              ))}
-           </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* COLUNA ESQUERDA: MAPA */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="bg-slate-900 p-3 rounded-[50px] shadow-2xl relative overflow-hidden">
+               <div className="absolute top-8 right-8 z-[1000] bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-white space-y-2">
+                  <p className="text-[8px] font-black uppercase opacity-60">Legenda de Domínio</p>
+                  {cand1 && <div className="flex items-center gap-2 text-[10px] font-bold"><div className="w-2 h-2 bg-emerald-500 rounded-full"></div> {cand1.nome}</div>}
+                  {cand2 && <div className="flex items-center gap-2 text-[10px] font-bold"><div className="w-2 h-2 bg-red-500 rounded-full"></div> {cand2.nome}</div>}
+                  {cand3 && <div className="flex items-center gap-2 text-[10px] font-bold"><div className="w-3 h-3 bg-blue-500 rounded-full"></div> {cand3.nome}</div>}
+               </div>
+               <div className="h-[700px] rounded-[40px] overflow-hidden">
+                  <MapContainer key={`${compAno}-${cand1?.num}-${cand2?.num}`} center={[-8.3578, -36.6961]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                    <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" />
+                    {res.detalhe.map(([n, d], i) => (
+                      <Marker key={i} position={d.coord} icon={criarIconeVencedor(d.v1, d.v2, d.v3)}>
+                        <Tooltip sticky>
+                          <div className="p-2 font-sans">
+                            <p className="text-[10px] font-black uppercase border-b mb-2">{n}</p>
+                            <div className="space-y-1">
+                              {cand1 && <p className="text-xs font-bold text-emerald-600">{cand1.nome}: {d.v1}v</p>}
+                              {cand2 && <p className="text-xs font-bold text-red-600">{cand2.nome}: {d.v2}v</p>}
+                              {cand3 && <p className="text-xs font-bold text-blue-600">{cand3.nome}: {d.v3}v</p>}
+                            </div>
+                          </div>
+                        </Tooltip>
+                      </Marker>
+                    ))}
+                  </MapContainer>
+               </div>
+            </div>
+          </div>
+
+          {/* COLUNA DIREITA: RANKING POR ESCOLA */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+               {cand1 && (
+                 <div className="bg-emerald-500 p-6 rounded-[30px] text-white shadow-lg">
+                    <p className="text-[10px] font-black uppercase opacity-70">Total {cand1.nome}</p>
+                    <p className="text-4xl font-black">{res.tot1.toLocaleString('pt-PT')}</p>
+                 </div>
+               )}
+               {cand2 && (
+                 <div className="bg-red-500 p-6 rounded-[30px] text-white shadow-lg">
+                    <p className="text-[10px] font-black uppercase opacity-70">Total {cand2.nome}</p>
+                    <p className="text-4xl font-black">{res.tot2.toLocaleString('pt-PT')}</p>
+                 </div>
+               )}
+               {cand3 && (
+                 <div className="bg-blue-500 p-6 rounded-[30px] text-white shadow-lg">
+                    <p className="text-[10px] font-black uppercase opacity-70">Total {cand3.nome}</p>
+                    <p className="text-4xl font-black">{res.tot3.toLocaleString('pt-PT')}</p>
+                 </div>
+               )}
+            </div>
+
+            <div className="bg-white p-8 rounded-[40px] border shadow-sm h-[480px] overflow-y-auto custom-scrollbar">
+               <h4 className="text-xs font-black text-slate-400 uppercase mb-6 tracking-widest">Desempenho Territorial</h4>
+               <div className="space-y-3">
+                  {res.detalhe.sort((a,b) => (b[1].v1 + b[1].v2 + b[1].v3) - (a[1].v1 + a[1].v2 + a[1].v3)).map(([n, d], i) => {
+                    const max = Math.max(d.v1, d.v2, d.v3);
+                    return (
+                      <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p className="text-[9px] font-black text-slate-400 uppercase mb-2 truncate">{n}</p>
+                        <div className="flex gap-2">
+                           {cand1 && <div className={`flex-1 p-2 rounded-xl text-center ${d.v1 === max && d.v1 > 0 ? 'bg-emerald-500 text-white shadow-md' : 'bg-white'}`}>
+                              <p className="text-[10px] font-black">{d.v1}</p>
+                           </div>}
+                           {cand2 && <div className={`flex-1 p-2 rounded-xl text-center ${d.v2 === max && d.v2 > 0 ? 'bg-red-500 text-white shadow-md' : 'bg-white'}`}>
+                              <p className="text-[10px] font-black">{d.v2}</p>
+                           </div>}
+                           {cand3 && <div className={`flex-1 p-2 rounded-xl text-center ${d.v3 === max && d.v3 > 0 ? 'bg-blue-500 text-white shadow-md' : 'bg-white'}`}>
+                              <p className="text-[10px] font-black">{d.v3}</p>
+                           </div>}
+                        </div>
+                      </div>
+                    )
+                  })}
+               </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
