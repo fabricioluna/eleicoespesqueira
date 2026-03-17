@@ -1,0 +1,554 @@
+{
+  "10000": {
+    "apelido": "ZEZINHO DA BRIBOCA"
+  },
+  "10010": {
+    "apelido": "ZILDA"
+  },
+  "10011": {
+    "apelido": "MAURICÉLIA"
+  },
+  "10100": {
+    "apelido": "WHENIO DO SOM"
+  },
+  "10101": {
+    "apelido": "LUCIANO BENONE"
+  },
+  "10111": {
+    "apelido": "BAL DE MIMOSO"
+  },
+  "10113": {
+    "apelido": "ROBERTO DO MIAMI"
+  },
+  "10123": {
+    "apelido": "ZÉ MARIA CAMPOS"
+  },
+  "10200": {
+    "apelido": "SEVERINO ÍNDIO"
+  },
+  "10222": {
+    "apelido": "CICINHO DE MIMOSO"
+  },
+  "10232": {
+    "apelido": "ZÉ CARLOS ÍNDIO"
+  },
+  "10333": {
+    "apelido": "GENILDE LIMA"
+  },
+  "10334": {
+    "apelido": "CYNTHIA LIRA"
+  },
+  "10444": {
+    "apelido": "CHACRINHA MARCHANTE"
+  },
+  "10456": {
+    "apelido": "SAMUEL DINHO"
+  },
+  "10500": {
+    "apelido": "SIL XUKURU"
+  },
+  "10555": {
+    "apelido": "PASTINHA XUKURU"
+  },
+  "10600": {
+    "apelido": "WASHINGTON DO CALÇAMENTO"
+  },
+  "10700": {
+    "apelido": "UARA MOTOTÁXI"
+  },
+  "10777": {
+    "apelido": "CÍCERA DO BOLO"
+  },
+  "10789": {
+    "apelido": "DANI"
+  },
+  "10888": {
+    "apelido": "NEGA DE BIL"
+  },
+  "10999": {
+    "apelido": "REJANE SOUZA"
+  },
+  "13000": {
+    "apelido": "DINHO BARBEIRO"
+  },
+  "13123": {
+    "apelido": "CIDA DA COHAB"
+  },
+  "13300": {
+    "apelido": "ZÉ DO PIU"
+  },
+  "13420": {
+    "apelido": "RYAN DO JUREMA PRETA"
+  },
+  "13456": {
+    "apelido": "GERALDO MAJELA"
+  },
+  "13600": {
+    "apelido": "ANA BEATRIZ"
+  },
+  "14000": {
+    "apelido": "JUNIOR LOPES"
+  },
+  "14014": {
+    "apelido": "MICAELE"
+  },
+  "14100": {
+    "apelido": "ARNALDO FUMINHO"
+  },
+  "14111": {
+    "apelido": "MANDU"
+  },
+  "14122": {
+    "apelido": "GEAN DA TOYOTA"
+  },
+  "14123": {
+    "apelido": "FERRINHO XUKURU"
+  },
+  "14144": {
+    "apelido": "INAYANNE MIKAELLY"
+  },
+  "14200": {
+    "apelido": "LEANDRO XUKURU"
+  },
+  "14222": {
+    "apelido": "TIAGO VASCONCELOS"
+  },
+  "14232": {
+    "apelido": "LENILDO DA TOMATE"
+  },
+  "14300": {
+    "apelido": "EVANDRO INDIO"
+  },
+  "14333": {
+    "apelido": "JUNIOR DA OFICINA"
+  },
+  "14400": {
+    "apelido": "ITA BERNARDO"
+  },
+  "14424": {
+    "apelido": "JESSICA LEOPOLDO"
+  },
+  "14441": {
+    "apelido": "DONA MARLI"
+  },
+  "14444": {
+    "apelido": "OLIVEIRA DO BANCO"
+  },
+  "14500": {
+    "apelido": "ELIENE PROTETORA"
+  },
+  "14555": {
+    "apelido": "PATRICIO PEDREIRO"
+  },
+  "14567": {
+    "apelido": "SUNICO"
+  },
+  "14600": {
+    "apelido": "JOAO DO JEGUE"
+  },
+  "14700": {
+    "apelido": "MARIA GORETTI"
+  },
+  "14777": {
+    "apelido": "PAULO XUKURU"
+  },
+  "14888": {
+    "apelido": "DANIELA OLIVEIRA"
+  },
+  "14999": {
+    "apelido": "ANA KETLYN"
+  },
+  "22000": {
+    "apelido": "EDER PROFESSOR"
+  },
+  "22022": {
+    "apelido": "RUBIANE BARBOZA"
+  },
+  "22111": {
+    "apelido": "CIGANO"
+  },
+  "22123": {
+    "apelido": "JUARY DO BMG"
+  },
+  "22190": {
+    "apelido": "KEKA"
+  },
+  "22220": {
+    "apelido": "ANGÉLICA"
+  },
+  "22221": {
+    "apelido": "DIEGO DE MUTUCA"
+  },
+  "22222": {
+    "apelido": "GALEGO DO PEIXE"
+  },
+  "22223": {
+    "apelido": "VADO SERRALHEIRO"
+  },
+  "22232": {
+    "apelido": "JORGE DO SINAL"
+  },
+  "22277": {
+    "apelido": "HELIO DO GAS"
+  },
+  "22333": {
+    "apelido": "ANDRE DO MERCADO"
+  },
+  "22345": {
+    "apelido": "ALEXANDRE PROFESSOR"
+  },
+  "22444": {
+    "apelido": "EDVALDO ALEXANDRINO"
+  },
+  "22500": {
+    "apelido": "FLAVIO LOTAÇAO"
+  },
+  "22555": {
+    "apelido": "IZABELLY NAYARA"
+  },
+  "22567": {
+    "apelido": "VALDIR DO MERCADINHO"
+  },
+  "22578": {
+    "apelido": "ALUIZIO DO EUCALÍPTO"
+  },
+  "22777": {
+    "apelido": "PASTOR OSÉAS"
+  },
+  "22800": {
+    "apelido": "ELIZABETE DO DOCE"
+  },
+  "22888": {
+    "apelido": "WILSON FEITOZA"
+  },
+  "22900": {
+    "apelido": "BIA ÍNDIA"
+  },
+  "22999": {
+    "apelido": "SOCORRO DA ASSOCIAÇÃO"
+  },
+  "25000": {
+    "apelido": "CORRINHA DA CAIXA DAGUA"
+  },
+  "25111": {
+    "apelido": "JOAO GALINDO"
+  },
+  "25123": {
+    "apelido": "SARGENTO IRMAO WALDIR"
+  },
+  "25144": {
+    "apelido": "GILBERTO"
+  },
+  "25222": {
+    "apelido": "TOINHO DA FARMACIA"
+  },
+  "25225": {
+    "apelido": "SEVERINO DO REMEDIO"
+  },
+  "25232": {
+    "apelido": "DEMARCIO"
+  },
+  "25234": {
+    "apelido": "JOSIVAN GALINDO"
+  },
+  "25321": {
+    "apelido": "ALEXANDRE VALENÇA"
+  },
+  "25333": {
+    "apelido": "DR. ZE ANTONIO"
+  },
+  "25444": {
+    "apelido": "GERALDA DA SAUDE"
+  },
+  "25525": {
+    "apelido": "SAMUEL SANTANA"
+  },
+  "25552": {
+    "apelido": "ROMILDO D LOTACAO"
+  },
+  "25555": {
+    "apelido": "LENI DE MIMOSO"
+  },
+  "25556": {
+    "apelido": "STEFANE MENDONCA"
+  },
+  "25611": {
+    "apelido": "LURDINHA ARAGAO"
+  },
+  "25666": {
+    "apelido": "JOYCE DO SALGADO"
+  },
+  "25678": {
+    "apelido": "JULIA BATISTA"
+  },
+  "25777": {
+    "apelido": "IRMÃ NEIDE"
+  },
+  "25800": {
+    "apelido": "SARGENTO ARLINDO"
+  },
+  "25888": {
+    "apelido": "NENEM GUEDES"
+  },
+  "25899": {
+    "apelido": "REGINALDO BEZERRA"
+  },
+  "25999": {
+    "apelido": "PAULO ARAUJO"
+  },
+  "36000": {
+    "apelido": "VALÉRIA DE ZÉ BAIXINHO"
+  },
+  "36024": {
+    "apelido": "EVANDRO NILO"
+  },
+  "36025": {
+    "apelido": "SUELY"
+  },
+  "36036": {
+    "apelido": "ROCHEVANIA ROCHA"
+  },
+  "36058": {
+    "apelido": "BÍU DA SAÚDE"
+  },
+  "36111": {
+    "apelido": "VALDEMIRO DEMA"
+  },
+  "36123": {
+    "apelido": "DUQUE DA SAUDE"
+  },
+  "36222": {
+    "apelido": "FRANCISCO FUXICO"
+  },
+  "36232": {
+    "apelido": "CARRIM MOITA"
+  },
+  "36333": {
+    "apelido": "WALMIR TENÓRIO"
+  },
+  "36444": {
+    "apelido": "LAURA ARCANJOS"
+  },
+  "36525": {
+    "apelido": "ADELMO DO ESTOFADO"
+  },
+  "36555": {
+    "apelido": "JURANDIR TORRES"
+  },
+  "36577": {
+    "apelido": "FATIMA DE LULA"
+  },
+  "36606": {
+    "apelido": "ALEX FILHO DE POLAÇA"
+  },
+  "36625": {
+    "apelido": "FRANCISCO FEITOZA"
+  },
+  "36666": {
+    "apelido": "IZABELA LINS"
+  },
+  "36777": {
+    "apelido": "LUCIANO BRITO"
+  },
+  "36977": {
+    "apelido": "TEREZA ARAGÃO"
+  },
+  "36980": {
+    "apelido": "DANIELE SIQUEIRA"
+  },
+  "36999": {
+    "apelido": "TETÉ DE MIRÃO DO POVÃO"
+  },
+  "45000": {
+    "apelido": "SEBINHA"
+  },
+  "45013": {
+    "apelido": "IÊJA DO LABORATÓRIO"
+  },
+  "45015": {
+    "apelido": "ANALICE"
+  },
+  "45025": {
+    "apelido": "APARECIDA"
+  },
+  "45111": {
+    "apelido": "CICINHO OLIVEIRA"
+  },
+  "45123": {
+    "apelido": "PROFESSOR VAVA"
+  },
+  "45125": {
+    "apelido": "LUCIANO DA ESCOLINHA"
+  },
+  "45200": {
+    "apelido": "WAGNER SAFADÃO"
+  },
+  "45222": {
+    "apelido": "MATEUS LEITE"
+  },
+  "45225": {
+    "apelido": "CASSIO (PRETO)"
+  },
+  "45300": {
+    "apelido": "ANA CRISTINA"
+  },
+  "45325": {
+    "apelido": "KATIA AGENTE DE SAUDE"
+  },
+  "45333": {
+    "apelido": "TINTINO"
+  },
+  "45425": {
+    "apelido": "JOAO DA ASSOCIAÇÃO"
+  },
+  "45444": {
+    "apelido": "POTÊNCIA OLIVEIRA"
+  },
+  "45525": {
+    "apelido": "MÁRCIA DO VIRA KOPUS"
+  },
+  "45555": {
+    "apelido": "BIÁ CABRAL"
+  },
+  "45678": {
+    "apelido": "JOJÓ"
+  },
+  "45888": {
+    "apelido": "LIVIO FERREIRA"
+  },
+  "50000": {
+    "apelido": "ANTÔNIO ROCHA JR"
+  },
+  "50100": {
+    "apelido": "JOSSE"
+  },
+  "50111": {
+    "apelido": "ZÉ PAULO PROF DE INFORMÁTICA"
+  },
+  "50123": {
+    "apelido": "SANDRO MELO"
+  },
+  "50333": {
+    "apelido": "JODAIR LEÃO CAVALCANTE"
+  },
+  "50444": {
+    "apelido": "NILZA DE PEDRA REDONDA"
+  },
+  "50456": {
+    "apelido": "ROSA P/ UM MUNDO SAUDÁVEL"
+  },
+  "50500": {
+    "apelido": "JUNTOS"
+  },
+  "50555": {
+    "apelido": "XARA DO HOSPITAL"
+  },
+  "50777": {
+    "apelido": "LUCINEIDE"
+  },
+  "50789": {
+    "apelido": "FLORIANO JÚNIOR"
+  },
+  "50888": {
+    "apelido": "VANESSA MIRANDA"
+  },
+  "50999": {
+    "apelido": "CAROÇO"
+  },
+  "51000": {
+    "apelido": "LUIZ RAFAEL"
+  },
+  "51051": {
+    "apelido": "CLEITON MENDONÇA"
+  },
+  "51111": {
+    "apelido": "ARINETE DE JO"
+  },
+  "51112": {
+    "apelido": "DANIEL LEITE"
+  },
+  "51123": {
+    "apelido": "JOÃO PAULO DE PAPAGAIO"
+  },
+  "51126": {
+    "apelido": "ANA PAULA DA PITANGA"
+  },
+  "51151": {
+    "apelido": "BELLA"
+  },
+  "51220": {
+    "apelido": "NADO CARVALHO"
+  },
+  "51222": {
+    "apelido": "NALDO PAES"
+  },
+  "51226": {
+    "apelido": "JOÃO DOS MÓVEIS"
+  },
+  "51234": {
+    "apelido": "MARCONDES MACHANTE"
+  },
+  "51300": {
+    "apelido": "CRACIETE DO RESIDENCIAL"
+  },
+  "51333": {
+    "apelido": "EDILSON DA PITANGA"
+  },
+  "51444": {
+    "apelido": "FILIPE LINS"
+  },
+  "51456": {
+    "apelido": "SAMUEL DO CARRO DE SOM"
+  },
+  "51477": {
+    "apelido": "VAL DO PACHECO"
+  },
+  "51500": {
+    "apelido": "DORA SILVA"
+  },
+  "51555": {
+    "apelido": "AGUINALDO MOVEIS"
+  },
+  "51611": {
+    "apelido": "MARIA SALETE"
+  },
+  "51666": {
+    "apelido": "CAT CAT"
+  },
+  "51777": {
+    "apelido": "GERALDO KIPA"
+  },
+  "51888": {
+    "apelido": "LUIZ GOGÓ"
+  },
+  "51999": {
+    "apelido": "DAMIANA"
+  },
+  "65025": {
+    "apelido": "JOHN"
+  },
+  "65065": {
+    "apelido": "VAUFRIDES VALENÇA"
+  },
+  "65111": {
+    "apelido": "BISCOITE"
+  },
+  "65123": {
+    "apelido": "EVANDO ELIAS"
+  },
+  "65165": {
+    "apelido": "SHIRLEY DO LANCHE"
+  },
+  "65232": {
+    "apelido": "PROFESSOR BRUNO OLIVEIRA"
+  },
+  "65333": {
+    "apelido": "AGUEDA DOS SANTOS"
+  },
+  "65444": {
+    "apelido": "RITA DE CASSIA"
+  },
+  "65555": {
+    "apelido": "NELMON DE MUTUCA"
+  }
+}

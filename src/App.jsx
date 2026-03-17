@@ -4,7 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapContainer, TileLayer, Marker, Tooltip } from 'react-leaflet'
 
-// --- FUNÇÕES AUXILIARES DE INTELIGÊNCIA ---
+// --- FUNÇÕES AUXILIARES ---
 const removerAcentos = (str) => {
   if (!str) return '';
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -25,12 +25,8 @@ const calcularDistancia = (a, b) => {
 
 const gerarCoordenadaEscola = (nomeEscola) => {
   let hash = 0;
-  for (let i = 0; i < nomeEscola.length; i++) {
-    hash = nomeEscola.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const offsetLat = (hash % 100) / 3000; 
-  const offsetLng = ((hash >> 2) % 100) / 3000;
-  return [-8.3578 + offsetLat, -36.6961 + offsetLng];
+  for (let i = 0; i < nomeEscola.length; i++) hash = nomeEscola.charCodeAt(i) + ((hash << 5) - hash);
+  return [-8.3578 + ((hash % 100) / 3000), -36.6961 + (((hash >> 2) % 100) / 3000)];
 };
 
 const criarIconeLeaflet = (votos, maxVotos, corBase, corBorda) => {
@@ -47,11 +43,16 @@ function App() {
   const [erro, setErro] = useState('');
   const [logado, setLogado] = useState(false);
 
-  const [dados2020, setDados2020] = useState([]);
-  const [dados2024, setDados2024] = useState([]);
-  const [carregando, setCarregando] = useState(false);
+  // Estados dos Arquivos
+  const [dadosMapa2020, setDadosMapa2020] = useState([]);
+  const [dadosMapa2024, setDadosMapa2024] = useState([]);
+  const [dicionarioApelidos, setDicionarioApelidos] = useState({ '2020': {}, '2024': {} });
 
+  const [carregando, setCarregando] = useState(false);
+  
+  // NOVOS CONTROLES DE INTERFACE
   const [abaAtiva, setAbaAtiva] = useState('candidato'); 
+  const [cargoAtivo, setCargoAtivo] = useState('VEREADOR'); // 'VEREADOR' ou 'PREFEITO'
   
   const [listaCandidatos, setListaCandidatos] = useState([]);
   const [listaEscolas, setListaEscolas] = useState([]);
@@ -76,51 +77,53 @@ function App() {
   useEffect(() => {
     if (logado) {
       setCarregando(true);
-      Papa.parse('/eleicoespesqueira2020.csv', {
-        download: true, header: true, delimiter: ';', skipEmptyLines: true,
-        complete: (resultado20) => {
-          setDados2020(resultado20.data);
-          Papa.parse('/eleicoespesqueira2024.csv', {
-            download: true, header: true, delimiter: ';', skipEmptyLines: true,
-            complete: (resultado24) => { setDados2024(resultado24.data); setCarregando(false); }
-          });
-        }
+      Promise.all([
+        new Promise(resolve => Papa.parse('/eleicoespesqueira2020.csv', { download: true, header: true, delimiter: ';', skipEmptyLines: true, complete: resolve, error: () => resolve({data:[]}) })),
+        new Promise(resolve => Papa.parse('/eleicoespesqueira2024.csv', { download: true, header: true, delimiter: ';', skipEmptyLines: true, complete: resolve, error: () => resolve({data:[]}) })),
+        fetch('/apelidos_2020.json').then(res => res.ok ? res.json() : {}).catch(() => ({})),
+        fetch('/apelidos_2024.json').then(res => res.ok ? res.json() : {}).catch(() => ({}))
+      ]).then(([resM20, resM24, apelidos20, apelidos24]) => {
+        setDadosMapa2020(resM20.data);
+        setDadosMapa2024(resM24.data);
+        setDicionarioApelidos({ '2020': apelidos20, '2024': apelidos24 });
+        setCarregando(false);
       });
     }
   }, [logado]);
 
-  // --- FILTRO DE EXTRAÇÃO BLINDADO (LIMPEZA TOTAL) ---
+  // --- RECONSTRUÇÃO DA LISTA COM BASE NO CARGO SELECIONADO ---
   useEffect(() => {
     const nomesCandidatos = new Set();
     const nomesEscolas = new Set();
     
-    const processarLinha = (linha, ano) => {
-      // 1. TRAVA MUNICÍPIO: Ignora tudo que não for de Pesqueira
+    const processarMapa = (linha, ano) => {
       const municipio = linha.NM_MUNICIPIO ? linha.NM_MUNICIPIO.trim().toUpperCase() : '';
       if (municipio !== 'PESQUEIRA') return;
 
-      // 2. Limpeza de espaços invisíveis e maiúsculas
-      const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
-      const nomeUrna = linha.NM_VOTAVEL ? linha.NM_VOTAVEL.trim() : '';
-      const numero = linha.NR_VOTAVEL ? linha.NR_VOTAVEL.trim() : '';
       const escola = linha.NM_LOCAL_VOTACAO ? linha.NM_LOCAL_VOTACAO.trim() : '';
+      if (escola) nomesEscolas.add(escola);
 
-      if (cargo === 'VEREADOR' && nomeUrna && numero) {
-        nomesCandidatos.add(`(${ano}) ${nomeUrna} - ${numero}`);
-      }
-      if (escola) {
-        nomesEscolas.add(escola);
+      const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
+      const numero = linha.NR_VOTAVEL ? linha.NR_VOTAVEL.trim() : '';
+      
+      // FILTRO PELO CARGO ATUAL
+      if (cargo === cargoAtivo && numero) {
+        const apelidoOficial = (dicionarioApelidos[ano][numero] && dicionarioApelidos[ano][numero].apelido) 
+                                ? dicionarioApelidos[ano][numero].apelido 
+                                : (linha.NM_VOTAVEL ? linha.NM_VOTAVEL.trim() : 'NÃO IDENTIFICADO');
+        nomesCandidatos.add(`(${ano}) ${apelidoOficial} - ${numero}`);
       }
     };
 
-    dados2020.forEach(linha => processarLinha(linha, '2020'));
-    dados2024.forEach(linha => processarLinha(linha, '2024'));
+    dadosMapa2020.forEach(linha => processarMapa(linha, '2020'));
+    dadosMapa2024.forEach(linha => processarMapa(linha, '2024'));
 
     setListaCandidatos(Array.from(nomesCandidatos).sort());
     setListaEscolas(Array.from(nomesEscolas).sort());
     
+    // Limpa a tela ao mudar de Aba ou de Cargo
     setTermoPesquisa(''); setResultadoCandidato(null); setResultadoEscola(null); setSugestaoCorrecao(null);
-  }, [abaAtiva, dados2020, dados2024]);
+  }, [abaAtiva, cargoAtivo, dadosMapa2020, dadosMapa2024, dicionarioApelidos]);
 
   const handleDigitacao = (e) => {
     const valor = e.target.value;
@@ -159,28 +162,30 @@ function App() {
     setTermoPesquisa(item); setMostrarSugestoes(false); setSugestaoCorrecao(null);
     
     if (abaAtiva === 'candidato' || abaAtiva === 'mapa') {
+      const partes = item.split(' - ');
+      const numeroExato = partes[partes.length - 1].trim();
       const ultimoTracoIndex = item.lastIndexOf(' - ');
-      const nomeExato = item.substring(7, ultimoTracoIndex).trim();
-      analisarCandidato(nomeExato);
+      const nomeExibicao = item.substring(7, ultimoTracoIndex).trim();
+      analisarCandidato(numeroExato, nomeExibicao);
     } else {
       analisarLocal(item.trim());
     }
   };
 
-  // --- MATEMÁTICA DE VOTOS BLINDADA ---
-  const analisarCandidato = (nomeBusca) => {
-    const processarAno = (dados) => {
+  const analisarCandidato = (numeroBusca, nomeExibicao) => {
+    const processarAno = (dadosMapa, ano) => {
       let totalVotos = 0; const locais = {};
       let maxVotosNumaEscola = 0; 
 
-      dados.forEach(linha => {
+      dadosMapa.forEach(linha => {
         const municipio = linha.NM_MUNICIPIO ? linha.NM_MUNICIPIO.trim().toUpperCase() : '';
         if (municipio !== 'PESQUEIRA') return;
 
         const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
-        const nomeUrna = linha.NM_VOTAVEL ? linha.NM_VOTAVEL.trim() : '';
+        const numeroCandidato = linha.NR_VOTAVEL ? linha.NR_VOTAVEL.trim() : '';
         
-        if (cargo === 'VEREADOR' && nomeUrna === nomeBusca) {
+        // Verifica o Cargo Ativo antes de somar os votos!
+        if (cargo === cargoAtivo && numeroCandidato === numeroBusca) {
           const votos = parseInt(linha.QT_VOTOS, 10) || 0;
           totalVotos += votos;
           
@@ -203,10 +208,7 @@ function App() {
 
       const rankingLocais = Object.entries(locais)
         .map(([escolaNome, dadosLocal]) => {
-          const secoesTexto = Object.entries(dadosLocal.secoesDetalhe)
-            .sort((a, b) => b[1] - a[1])
-            .map(([sec, vts]) => `Seção ${sec}: ${vts}v`)
-            .join(' | ');
+          const secoesTexto = Object.entries(dadosLocal.secoesDetalhe).sort((a, b) => b[1] - a[1]).map(([sec, vts]) => `Seção ${sec}: ${vts}v`).join(' | ');
           return { escola: escolaNome, votos: dadosLocal.totalEscola, coord: dadosLocal.coord, secoesTexto };
         })
         .sort((a, b) => b.votos - a.votos);
@@ -214,27 +216,38 @@ function App() {
       return { total: totalVotos, rankingLocais, maxVotosNumaEscola };
     };
 
-    setResultadoCandidato({ nomeExato: nomeBusca, ano2020: processarAno(dados2020), ano2024: processarAno(dados2024) });
+    setResultadoCandidato({ 
+      nomeExato: `${nomeExibicao} (Nº ${numeroBusca})`, 
+      ano2020: processarAno(dadosMapa2020, '2020'), 
+      ano2024: processarAno(dadosMapa2024, '2024') 
+    });
   };
 
   const analisarLocal = (escolaBusca) => {
-    const processarAno = (dados) => {
+    const processarAno = (dadosMapa, ano) => {
       let totalVotosEscola = 0; const candidatos = {};
       
-      dados.forEach(linha => {
+      dadosMapa.forEach(linha => {
         const municipio = linha.NM_MUNICIPIO ? linha.NM_MUNICIPIO.trim().toUpperCase() : '';
         if (municipio !== 'PESQUEIRA') return;
 
         const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
         const local = linha.NM_LOCAL_VOTACAO ? linha.NM_LOCAL_VOTACAO.trim() : '';
         
-        if (cargo === 'VEREADOR' && local === escolaBusca) {
+        // Verifica o Cargo Ativo antes de somar o ranking da escola
+        if (cargo === cargoAtivo && local === escolaBusca) {
           const votos = parseInt(linha.QT_VOTOS, 10) || 0;
           totalVotosEscola += votos;
           
-          const candidato = linha.NM_VOTAVEL ? linha.NM_VOTAVEL.trim() : 'NÃO IDENTIFICADO';
-          if (!candidatos[candidato]) candidatos[candidato] = 0;
-          candidatos[candidato] += votos;
+          const numeroCandidato = linha.NR_VOTAVEL ? linha.NR_VOTAVEL.trim() : '';
+          const nomeGenerico = linha.NM_VOTAVEL ? linha.NM_VOTAVEL.trim() : 'NÃO IDENTIFICADO';
+          
+          const apelido = (dicionarioApelidos[ano][numeroCandidato] && dicionarioApelidos[ano][numeroCandidato].apelido) 
+                           ? dicionarioApelidos[ano][numeroCandidato].apelido 
+                           : nomeGenerico;
+
+          if (!candidatos[apelido]) candidatos[apelido] = 0;
+          candidatos[apelido] += votos;
         }
       });
 
@@ -245,7 +258,8 @@ function App() {
 
       return { total: totalVotosEscola, rankingCandidatos };
     };
-    setResultadoEscola({ nomeExato: escolaBusca, ano2020: processarAno(dados2020), ano2024: processarAno(dados2024) });
+    
+    setResultadoEscola({ nomeExato: escolaBusca, ano2020: processarAno(dadosMapa2020, '2020'), ano2024: processarAno(dadosMapa2024, '2024') });
   };
 
   if (logado) {
@@ -265,9 +279,20 @@ function App() {
         </div>
 
         <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 mb-6">
+          
+          {/* SELETOR DE CARGO */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8 bg-slate-50 p-2 rounded-xl border border-slate-200">
+            <button onClick={() => setCargoAtivo('VEREADOR')} className={`flex-1 py-3 px-4 rounded-lg font-black text-sm md:text-base transition-all ${cargoAtivo === 'VEREADOR' ? 'bg-slate-800 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}>
+              🏛️ Eleição para Vereador
+            </button>
+            <button onClick={() => setCargoAtivo('PREFEITO')} className={`flex-1 py-3 px-4 rounded-lg font-black text-sm md:text-base transition-all ${cargoAtivo === 'PREFEITO' ? 'bg-blue-700 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200'}`}>
+              👔 Eleição para Prefeito
+            </button>
+          </div>
+
           <div className="flex flex-wrap border-b border-gray-200 mb-6 gap-y-2">
             <button onClick={() => setAbaAtiva('candidato')} className={`pb-4 px-4 md:px-6 font-bold text-sm md:text-lg transition-colors border-b-4 ${abaAtiva === 'candidato' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
-              1. Analisar Vereador
+              1. Analisar Candidato
             </button>
             <button onClick={() => setAbaAtiva('escola')} className={`pb-4 px-4 md:px-6 font-bold text-sm md:text-lg transition-colors border-b-4 ${abaAtiva === 'escola' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
               2. Analisar Escola / Reduto
@@ -280,9 +305,9 @@ function App() {
           <div className="flex flex-col gap-6">
             <div className="relative z-50">
               <label className="block text-sm font-bold text-slate-700 mb-3">
-                {(abaAtiva === 'candidato' || abaAtiva === 'mapa') ? `Digite o nome ou número do candidato:` : `Digite o nome do local de votação (Escola):`}
+                {(abaAtiva === 'candidato' || abaAtiva === 'mapa') ? `Digite o nome ou número de urna do ${cargoAtivo.toLowerCase()}:` : `Digite o nome do local de votação (Escola):`}
               </label>
-              <input type="text" placeholder={(abaAtiva === 'candidato' || abaAtiva === 'mapa') ? `Buscar nos candidatos...` : `Buscar nas escolas...`}
+              <input type="text" placeholder={(abaAtiva === 'candidato' || abaAtiva === 'mapa') ? `Buscar nos candidatos a ${cargoAtivo.toLowerCase()}...` : `Buscar nas escolas...`}
                 className={`w-full px-4 py-4 bg-slate-50 border-2 rounded-lg outline-none text-lg font-medium transition-all focus:ring-2 ${(abaAtiva === 'candidato' || abaAtiva === 'mapa') ? 'border-slate-200 focus:ring-blue-600' : 'border-slate-200 focus:ring-emerald-500'}`}
                 value={termoPesquisa} onChange={handleDigitacao} disabled={carregando} />
               
@@ -314,9 +339,11 @@ function App() {
                 
                 {resultadoCandidato.ano2020 ? (
                   <div className="flex flex-col h-full">
-                    <div className="mb-4 shrink-0">
-                      <p className="text-sm text-slate-400 uppercase tracking-wider font-bold mb-1">Total de Votos (Soma das Seções)</p>
-                      <p className="text-5xl font-black text-white">{resultadoCandidato.ano2020.total.toLocaleString('pt-PT')}</p>
+                    <div className="mb-4 shrink-0 flex flex-col gap-2">
+                      <div>
+                        <p className="text-sm text-slate-400 uppercase tracking-wider font-bold mb-1">Total de Votos (Soma das Seções)</p>
+                        <p className="text-5xl font-black text-emerald-400">{resultadoCandidato.ano2020.total.toLocaleString('pt-PT')}</p>
+                      </div>
                     </div>
                     
                     {abaAtiva === 'mapa' && (
@@ -360,9 +387,11 @@ function App() {
                 
                 {resultadoCandidato.ano2024 ? (
                   <div className="flex flex-col h-full">
-                    <div className="mb-4 shrink-0">
-                      <p className="text-sm text-slate-400 uppercase tracking-wider font-bold mb-1">Total de Votos (Soma das Seções)</p>
-                      <p className="text-5xl font-black text-white">{resultadoCandidato.ano2024.total.toLocaleString('pt-PT')}</p>
+                    <div className="mb-4 shrink-0 flex flex-col gap-2">
+                      <div>
+                        <p className="text-sm text-slate-400 uppercase tracking-wider font-bold mb-1">Total de Votos (Soma das Seções)</p>
+                        <p className="text-5xl font-black text-blue-400">{resultadoCandidato.ano2024.total.toLocaleString('pt-PT')}</p>
+                      </div>
                     </div>
                     
                     {abaAtiva === 'mapa' && (
@@ -413,7 +442,7 @@ function App() {
                  <div className="absolute top-0 right-0 bg-emerald-800 text-xs font-bold px-3 py-1 rounded-bl-lg">2020</div>
                  {resultadoEscola.ano2020 ? (
                    <div className="flex flex-col h-full">
-                     <p className="text-3xl font-black mb-4">{resultadoEscola.ano2020.total} votos totais</p>
+                     <p className="text-3xl font-black mb-4">{resultadoEscola.ano2020.total} votos para {cargoAtivo.toLowerCase()}</p>
                      <ul className="space-y-2 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                        {resultadoEscola.ano2020.rankingCandidatos.map((cand, idx) => (
                          <li key={idx} className="flex justify-between bg-emerald-950/50 p-3 rounded">
@@ -430,7 +459,7 @@ function App() {
                  <div className="absolute top-0 right-0 bg-emerald-600 text-xs font-bold px-3 py-1 rounded-bl-lg">2024</div>
                  {resultadoEscola.ano2024 ? (
                    <div className="flex flex-col h-full">
-                     <p className="text-3xl font-black mb-4">{resultadoEscola.ano2024.total} votos totais</p>
+                     <p className="text-3xl font-black mb-4">{resultadoEscola.ano2024.total} votos para {cargoAtivo.toLowerCase()}</p>
                      <ul className="space-y-2 overflow-y-auto flex-1 pr-2 custom-scrollbar">
                        {resultadoEscola.ano2024.rankingCandidatos.map((cand, idx) => (
                          <li key={idx} className="flex justify-between bg-emerald-950/50 p-3 rounded">
