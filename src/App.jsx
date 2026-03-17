@@ -43,16 +43,14 @@ function App() {
   const [erro, setErro] = useState('');
   const [logado, setLogado] = useState(false);
 
-  // Estados dos Arquivos
   const [dadosMapa2020, setDadosMapa2020] = useState([]);
   const [dadosMapa2024, setDadosMapa2024] = useState([]);
   const [dicionarioApelidos, setDicionarioApelidos] = useState({ '2020': {}, '2024': {} });
 
   const [carregando, setCarregando] = useState(false);
   
-  // NOVOS CONTROLES DE INTERFACE
   const [abaAtiva, setAbaAtiva] = useState('candidato'); 
-  const [cargoAtivo, setCargoAtivo] = useState('VEREADOR'); // 'VEREADOR' ou 'PREFEITO'
+  const [cargoAtivo, setCargoAtivo] = useState('VEREADOR'); 
   
   const [listaCandidatos, setListaCandidatos] = useState([]);
   const [listaEscolas, setListaEscolas] = useState([]);
@@ -91,7 +89,6 @@ function App() {
     }
   }, [logado]);
 
-  // --- RECONSTRUÇÃO DA LISTA COM BASE NO CARGO SELECIONADO ---
   useEffect(() => {
     const nomesCandidatos = new Set();
     const nomesEscolas = new Set();
@@ -106,7 +103,6 @@ function App() {
       const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
       const numero = linha.NR_VOTAVEL ? linha.NR_VOTAVEL.trim() : '';
       
-      // FILTRO PELO CARGO ATUAL
       if (cargo === cargoAtivo && numero) {
         const apelidoOficial = (dicionarioApelidos[ano][numero] && dicionarioApelidos[ano][numero].apelido) 
                                 ? dicionarioApelidos[ano][numero].apelido 
@@ -121,7 +117,6 @@ function App() {
     setListaCandidatos(Array.from(nomesCandidatos).sort());
     setListaEscolas(Array.from(nomesEscolas).sort());
     
-    // Limpa a tela ao mudar de Aba ou de Cargo
     setTermoPesquisa(''); setResultadoCandidato(null); setResultadoEscola(null); setSugestaoCorrecao(null);
   }, [abaAtiva, cargoAtivo, dadosMapa2020, dadosMapa2024, dicionarioApelidos]);
 
@@ -184,7 +179,6 @@ function App() {
         const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
         const numeroCandidato = linha.NR_VOTAVEL ? linha.NR_VOTAVEL.trim() : '';
         
-        // Verifica o Cargo Ativo antes de somar os votos!
         if (cargo === cargoAtivo && numeroCandidato === numeroBusca) {
           const votos = parseInt(linha.QT_VOTOS, 10) || 0;
           totalVotos += votos;
@@ -234,7 +228,6 @@ function App() {
         const cargo = linha.DS_CARGO ? linha.DS_CARGO.trim().toUpperCase() : '';
         const local = linha.NM_LOCAL_VOTACAO ? linha.NM_LOCAL_VOTACAO.trim() : '';
         
-        // Verifica o Cargo Ativo antes de somar o ranking da escola
         if (cargo === cargoAtivo && local === escolaBusca) {
           const votos = parseInt(linha.QT_VOTOS, 10) || 0;
           totalVotosEscola += votos;
@@ -261,6 +254,24 @@ function App() {
     
     setResultadoEscola({ nomeExato: escolaBusca, ano2020: processarAno(dadosMapa2020, '2020'), ano2024: processarAno(dadosMapa2024, '2024') });
   };
+
+  // Lógica para Extrair Prefeitos Únicos e criar os Botões de Acesso Rápido
+  let botoesPrefeito = [];
+  if (cargoAtivo === 'PREFEITO' && (abaAtiva === 'candidato' || abaAtiva === 'mapa')) {
+    const mapUnicos = new Map();
+    listaCandidatos.forEach(item => {
+      const partes = item.split(' - ');
+      const num = partes[partes.length - 1].trim();
+      const ultimoTraco = item.lastIndexOf(' - ');
+      const nome = item.substring(7, ultimoTraco).trim();
+      if (!mapUnicos.has(num)) {
+        mapUnicos.set(num, nome);
+      }
+    });
+    botoesPrefeito = Array.from(mapUnicos.entries())
+      .map(([num, nome]) => ({ num, nome }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }
 
   if (logado) {
     return (
@@ -320,6 +331,30 @@ function App() {
                   ))}
                 </ul>
               )}
+
+              {/* BOTÕES DE ACESSO RÁPIDO PARA PREFEITO */}
+              {botoesPrefeito.length > 0 && (
+                <div className="mt-4 p-4 bg-blue-50/60 rounded-xl border border-blue-100 animate-fade-in">
+                  <p className="text-sm font-black text-blue-800 mb-3 uppercase tracking-wider">Acesso Rápido - Prefeitos</p>
+                  <div className="flex flex-wrap gap-2">
+                    {botoesPrefeito.map((pref, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setTermoPesquisa(`${pref.nome} - ${pref.num}`);
+                          setMostrarSugestoes(false);
+                          analisarCandidato(pref.num, pref.nome);
+                        }}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-lg shadow-sm hover:border-blue-500 hover:text-blue-700 hover:shadow transition-all text-sm flex items-center gap-2"
+                      >
+                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs">{pref.num}</span>
+                        {pref.nome}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
